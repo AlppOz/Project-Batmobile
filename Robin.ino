@@ -8,8 +8,8 @@ WiFiClient client;
 
 bool hadObject = false;
 // Pin Assignments
-const int LIR = 8;
-const int RIR = 7;
+const int LIR = 8; //left IR
+const int RIR = 7; //right IR
 const int Scream = 11;
 const int Echo = 12;
 const int leftPermission = 0;
@@ -20,6 +20,8 @@ const int rightForward = A1;
 const int rightReverse = A2;
 int right = 100;
 int left = 100;
+int left_spin = 120;
+int right_spin = 100;
 
 //Variable for the use of the ultra sonic sensor
 const int Safe_Distance= 30;
@@ -32,18 +34,19 @@ String msg = "";
 
 
 // Two function for the basics of turning right or left for set time
+//to spin right, left wheel needs to turn and vice versa
 void spinRight(int duration){
-  analogWrite(leftPermission,120);
-  analogWrite(rightPermission,0);
-  digitalWrite(leftForward,HIGH);
-  digitalWrite(leftReverse,LOW);
+  analogWrite(leftPermission,left_spin); //give left motor power of 120/255
+  analogWrite(rightPermission,0); //spinning right only so right motor gets 0 power
+  digitalWrite(leftForward,HIGH); //enable forward motion
+  digitalWrite(leftReverse,LOW); //disable backwards motion
   delay(duration);
-  digitalWrite(leftForward,LOW);
-  analogWrite(leftPermission,0); 
+  digitalWrite(leftForward,LOW); //disable forward motion after set time
+  analogWrite(leftPermission,0); //stop left motor
 }
 
 void spinLeft(int duration){
-  analogWrite(rightPermission,100);
+  analogWrite(rightPermission,right_spin);
   analogWrite(leftPermission,0);
   digitalWrite(rightForward,HIGH);
   digitalWrite(rightReverse,LOW);
@@ -63,7 +66,7 @@ void Step_Left(){
   client.println("Adjusting Course Left");
 }
 
-// Funtions which return true if the buggy detects it has crossed the line
+//return true if the buggy detects it has crossed the line coming from the left
 bool Left_Error(){
   if(digitalRead(LIR)== LOW){
     return true;
@@ -72,7 +75,7 @@ bool Left_Error(){
   return false;
 }
 
-
+//return true if the buggy detects it has crossed the line coming from the right
 bool Right_Error(){
   if(digitalRead(RIR)==LOW){
     return true;
@@ -188,20 +191,15 @@ void loop() {
   
   if(mode == 'F'){
     if (!Bogie()){
-      if (Right_Error()){
-        while(Right_Error()){
-          Step_Left();
-        }
+      while(Right_Error()){
+        Step_Left();
       }
-      if(Left_Error()){
-        while(Left_Error()){
-          Step_Right();
-        }
+      while(Left_Error()){
+        Step_Right();
       }
+      
       Mush(150,left,right);
     }
   }
   else client.println("Stopped");
-}
-  
 }
