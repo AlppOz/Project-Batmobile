@@ -54,8 +54,10 @@ void forward(float cm) {
 
   int diff = 1;
   unsigned long current_right;
+  bool left_done = 0;
+  bool right_done = 0;
 
-  while (left_pulse < pulse_all || right_pulse < pulse_all) {
+  while (left_done == 0 || right_done == 0) {
     left_pulse = left_pulse_count();
     //checkRightEncoder();
     //right_pulse already exists as volatile;
@@ -64,26 +66,45 @@ void forward(float cm) {
     current_right = right_pulse;
     interrupts();
 
-    if (left_pulse > current_right) {
-      //diff = left_pulse - right_pulse;
-      left_power_new= left_power - (increm * diff);
-      right_power_new = right_power + (increm * diff);
-      analogWrite(leftPermission,left_power_new);
-      analogWrite(rightPermission,right_power_new);
+    //break individually logic
+    if (left_pulse >= pulse_all && left_done == 0) {
+      for (int i = left_power; i >= 0; i--) { //loop for smooth transition to a full stop not an abrupt one
+        analogWrite(leftPermission, i);
+        delay(1);
+      }
+      left_done = 1;
     }
-    else if (current_right > left_pulse) {
-      //diff = right_pulse - left_pulse;
-      left_power_new = left_power + (increm * diff);
-      right_power_new = right_power - (increm * diff);
-      analogWrite(leftPermission,left_power_new);
-      analogWrite(rightPermission,right_power_new);
-    }
-    else {
-      analogWrite(leftPermission,left_power);
-      analogWrite(rightPermission,right_power);
+    if (current_right >= pulse_all && right_done == 0) {
+      for (int i = left_power; i >= 0; i--) {
+        analogWrite(rightPermission,0);
+        delay(1);
+      }
+      right_done = 1;
     }
 
-    
+    if (left_done == 0 && right_done == 0) {
+      diff = abs(left_pulse - current_right);
+      if (diff >= 2) { //the resolution of the left pulse is two, whereas right's is one. So a difference of 1 bears no significance
+        if (left_pulse > current_right) {
+          //diff = left_pulse - right_pulse;
+          left_power_new= left_power - (increm * diff);
+          right_power_new = right_power + (increm * diff);
+          analogWrite(leftPermission,left_power_new);
+          analogWrite(rightPermission,right_power_new);
+        }
+        else if (current_right > left_pulse) {
+          //diff = right_pulse - left_pulse;
+          left_power_new = left_power + (increm * diff);
+          right_power_new = right_power - (increm * diff);
+          analogWrite(leftPermission,left_power_new);
+          analogWrite(rightPermission,right_power_new);
+        }
+      }
+      else {
+        analogWrite(leftPermission,left_power);
+        analogWrite(rightPermission,right_power);
+      }
+    }  
     
   }
 
@@ -91,7 +112,7 @@ void forward(float cm) {
   Serial.print("   ");
   Serial.print(right_pulse);
   Serial.println("");
-  //stopping the motors
+  //stopping the motors for sure this time
   digitalWrite(leftForward,LOW);
   digitalWrite(rightForward,LOW);
   analogWrite(leftPermission,0);
