@@ -3,6 +3,14 @@
 
 #include <Arduino.h>
 
+// Imports and Variable for Wifi Communication
+#include "WiFiS3.h"
+extern char ssid[];
+extern char pass[];
+extern int status;
+extern WiFiServer server;
+extern WiFiClient client;
+
 // Pin Assignments
 const int LIR = 10; //left IR
 const int RIR = 7; //right IR
@@ -30,6 +38,8 @@ extern String msg;
 
 extern volatile unsigned long right_pulse;
 extern volatile unsigned long right_duration;
+
+extern volatile bool hadObject;
 //extern unsigned long right_pulse;
 //extern int lastRightState;
 

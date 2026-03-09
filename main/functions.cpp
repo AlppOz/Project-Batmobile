@@ -121,3 +121,93 @@ void forward(float cm) {
   analogWrite(leftPermission,0);
   analogWrite(rightPermission,0);
 }
+
+void spinRight(int duration){
+  analogWrite(leftPermission,120); //give left motor power of 120/255
+  analogWrite(rightPermission,0); //spinning right only so right motor gets 0 power
+  digitalWrite(leftForward,HIGH); //enable forward motion
+  digitalWrite(leftReverse,LOW); //disable backwards motion
+  delay(duration);
+  digitalWrite(leftForward,LOW); //disable forward motion after set time
+  analogWrite(leftPermission,0); //stop left motor
+}
+
+void spinLeft(int duration){
+  analogWrite(rightPermission,100);
+  analogWrite(leftPermission,0);
+  digitalWrite(rightForward,HIGH);
+  digitalWrite(rightReverse,LOW);
+  delay(duration);
+  digitalWrite(rightForward,LOW);
+  analogWrite(rightPermission,0);
+}
+
+void Step_Right(){
+  spinRight(25);
+  client.println("Adjusting Course Right");
+}
+
+void Step_Left(){
+  spinLeft(25);
+  client.println("Adjusting Course Left");
+}
+
+bool Left_Error(){
+  if(digitalRead(LIR)== LOW){
+    return true;
+
+  }
+  return false;
+}
+
+bool Right_Error(){
+  if(digitalRead(RIR)==LOW){
+    return true;
+
+  }
+  return false;
+}
+
+void Mush(int duration, int left, int right){
+  analogWrite(leftPermission,left);
+  analogWrite(rightPermission,right);
+
+
+  digitalWrite(leftForward,HIGH);
+  digitalWrite(rightForward,HIGH);
+  digitalWrite(leftReverse,LOW);
+  digitalWrite(rightReverse,LOW);
+  
+
+  client.println("Going Forward");
+  delay(duration);
+
+  digitalWrite(leftForward,LOW);
+  digitalWrite(rightForward,LOW);
+  analogWrite(leftPermission,0);
+  analogWrite(rightPermission,0);
+}
+
+bool Bogie(int Safe_Distance){
+  long duration; //if needed for outside the function, we just pass by reference
+  int distance;
+
+  digitalWrite(Scream,LOW);
+  delayMicroseconds(2);
+
+  digitalWrite(Scream,HIGH);
+  delayMicroseconds(10);
+  digitalWrite(Scream,LOW);
+
+  duration = pulseIn(Echo,HIGH);
+  distance = duration/58;
+
+  if(distance < Safe_Distance) {
+    client.println("Obstacle in Path");
+    hadObject = true;
+    return true;
+  }
+  if (hadObject)client.println("Object Removed");
+  hadObject = false;
+  return false;
+}
