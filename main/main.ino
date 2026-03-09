@@ -58,17 +58,18 @@ void setup() {
   analogWrite(rightPermission, 0);
 }
 
-int right = 100;
-int left = 100;
+int right = 200;
+int left = 200;
 void loop() {
-  //forward(50);
-  //delay(20000);
+  forward(50);
+  delay(20000);
   //int left_pulse = left_pulse_count();
   //Serial.print(left_pulse);
   //Serial.print("  ");
   //Serial.print(right_pulse);
   //Serial.println("");
 
+  /*
   client = server.available (); //read in current command from client
   if (client){
     msg = client.readString();
@@ -94,7 +95,10 @@ void loop() {
         Step_Right();
       }
       
-      Mush(150,left,right);
+      Mush(200,left,right);
     }
   }
+  
+  */
+  
 }

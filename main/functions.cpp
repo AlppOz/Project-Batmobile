@@ -1,10 +1,76 @@
 #include "functions.h"
 
+byte shiftIn_r(int myDataPin, int myClockPin) {
+
+  int i;
+
+  int temp = 0;
+
+  int pinState;
+
+  byte myDataIn = 0;
+
+  pinMode(myClockPin, OUTPUT);
+
+  pinMode(myDataPin, INPUT);
+
+  for (i=7; i>=0; i--)
+
+  {
+
+    digitalWrite(myClockPin, 0);
+
+    delayMicroseconds(0.2);
+
+    temp = digitalRead(myDataPin);
+
+    if (temp) {
+
+      pinState = 1;
+
+      //set the bit to 0 no matter what
+
+      myDataIn = myDataIn | (1 << i);
+
+    }
+
+    else {
+
+      //turn it off -- only necessary for debugging
+
+     //print statement since myDataIn starts as 0
+
+      pinState = 0;
+
+    }
+
+    //Debugging print statements
+
+    //Serial.print(pinState);
+
+    //Serial.print("     ");
+
+    //Serial.println (dataIn, BIN);
+
+    digitalWrite(myClockPin, 1);
+
+  }
+
+  //debugging print statements whitespace
+
+  //Serial.println();
+
+  //Serial.println(myDataIn, BIN);
+
+  return myDataIn;
+}
+
 byte left_pulse_count() {
   digitalWrite(CD_control, 1);   // load parallel data from CD4040
   delayMicroseconds(5);
   digitalWrite(CD_control, 0);    // switch to serial shift mode
-  return shiftIn(CD_data, CD_clock, MSBFIRST);
+  //return shiftIn(CD_data, CD_clock, MSBFIRST);
+  return shiftIn_r(CD_data, CD_clock);
 }
 
 
@@ -102,7 +168,8 @@ void forward(float cm) {
         analogWrite(rightPermission,right_power_new);
       }
     }
-    /*
+    
+
     Serial.print(left_pulse);
     Serial.print(" ");
     Serial.print(left_power_new);
@@ -111,7 +178,7 @@ void forward(float cm) {
     Serial.print(" ");
     Serial.print(right_power_new);
     Serial.println("");
-    */
+    
   }
 
   
