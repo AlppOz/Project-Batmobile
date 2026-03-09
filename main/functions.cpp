@@ -67,7 +67,7 @@ void forward(float cm) {
     current_right = right_pulse;
     interrupts();
 
-    //break individually logic
+    //break individually logic. The "smooth" logic with the loop might be a little wrong
     if (left_pulse >= pulse_all && left_done == 0) {
       for (int i = left_power; i >= 0; i--) { //loop for smooth transition to a full stop not an abrupt one
         analogWrite(leftPermission, i);
@@ -77,7 +77,7 @@ void forward(float cm) {
     }
     if (current_right >= pulse_all && right_done == 0) {
       for (int i = left_power; i >= 0; i--) {
-        analogWrite(rightPermission,0);
+        analogWrite(rightPermission, i);
         delay(1);
       }
       right_done = 1;
