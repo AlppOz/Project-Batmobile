@@ -29,6 +29,7 @@ extern char mode;
 extern String msg;
 
 extern volatile unsigned long right_pulse;
+extern volatile unsigned long right_duration;
 //extern unsigned long right_pulse;
 //extern int lastRightState;
 

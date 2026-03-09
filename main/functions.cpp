@@ -31,7 +31,8 @@ void forward(float cm) {
   unsigned int right_power = 100;
   unsigned int increm = 10;
 
-  unsigned int left_power_new, right_power_new;
+  unsigned int left_power_new = left_power;
+  unsigned int right_power_new = right_power;
 
   unsigned int pulse_all = cm / hall_const;
   //add pulse rem method. I.e what if we need 8.8 pulses, it needs to register 0.8 * hall_const for the remaining distance somehow
@@ -83,39 +84,40 @@ void forward(float cm) {
     }
 
     if (left_done == 0 && right_done == 0) {
-      diff = abs(left_pulse - current_right);
-      if (diff >= 2) { //the resolution of the left pulse is two, whereas right's is one. So a difference of 1 bears no significance
-        if (left_pulse > current_right) {
-          //diff = left_pulse - right_pulse;
-          left_power_new= left_power - (increm * diff);
-          right_power_new = right_power + (increm * diff);
-          analogWrite(leftPermission,left_power_new);
-          analogWrite(rightPermission,right_power_new);
-        }
-        else if (current_right > left_pulse) {
-          //diff = right_pulse - left_pulse;
-          left_power_new = left_power + (increm * diff);
-          right_power_new = right_power - (increm * diff);
-          analogWrite(leftPermission,left_power_new);
-          analogWrite(rightPermission,right_power_new);
-        }
+      if (left_pulse > current_right) { //whenever left pulse changes, the first signal has information. A brand new pulse of 2 is truly a 2. And if it is greater than the right's 1 for example, needs correction
+        left_power_new= left_power - (increm * diff);
+        right_power_new = right_power + (increm * diff);
+        analogWrite(leftPermission,left_power_new);
+        analogWrite(rightPermission,right_power_new);
+      }
+      diff = abs((int)left_pulse - (int)current_right);
+      if (left_pulse < current_right && diff >= 2) { //the resolution of the left pulse is two, whereas right's is one. So a difference of 1 bears no informational significance
+        left_power_new = left_power + (increm * diff);
+        right_power_new = right_power - (increm * diff);
+        analogWrite(leftPermission,left_power_new);
+        analogWrite(rightPermission,right_power_new);
       }
       else {
-        analogWrite(leftPermission,left_power);
-        analogWrite(rightPermission,right_power);
+        analogWrite(leftPermission,left_power_new);
+        analogWrite(rightPermission,right_power_new);
       }
-    }  
-    
+    }
+    /*
+    Serial.print(left_pulse);
+    Serial.print(" ");
+    Serial.print(left_power_new);
+    Serial.print("   ");
+    Serial.print(right_pulse);
+    Serial.print(" ");
+    Serial.print(right_power_new);
+    Serial.println("");
+    */
   }
 
-  Serial.print(left_pulse);
-  Serial.print("   ");
-  Serial.print(right_pulse);
-  Serial.println("");
+  
   //stopping the motors for sure this time
   digitalWrite(leftForward,LOW);
   digitalWrite(rightForward,LOW);
   analogWrite(leftPermission,0);
   analogWrite(rightPermission,0);
 }
-

@@ -3,6 +3,7 @@
 
 
 volatile unsigned long right_pulse = 0;
+volatile unsigned long right_duration = 0;
 
 //unsigned long right_pulse = 0;
 
@@ -42,4 +43,9 @@ void setup() {
 void loop() {
   forward(50);
   delay(20000);
+  //int left_pulse = left_pulse_count();
+  //Serial.print(left_pulse);
+  //Serial.print("  ");
+  //Serial.print(right_pulse);
+  //Serial.println("");
 }
