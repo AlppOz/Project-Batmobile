@@ -157,7 +157,7 @@ void forward(float cm) {
         analogWrite(rightPermission,right_power_new);
       }
       diff = abs((int)left_pulse - (int)current_right);
-      if (left_pulse < current_right && diff >= 2) { //the resolution of the left pulse is two, whereas right's is one. So a difference of 1 bears no informational significance
+      if (left_pulse < current_right) {
         left_power_new = left_power + (increm * diff);
         right_power_new = right_power - (increm * diff);
         analogWrite(leftPermission,left_power_new);
@@ -211,12 +211,12 @@ void spinLeft(int duration){
 
 void Step_Right(){
   spinRight(25);
-  client.println("Adjusting Course Right");
+  //client.println("Adjusting Course Right");
 }
 
 void Step_Left(){
   spinLeft(25);
-  client.println("Adjusting Course Left");
+  //client.println("Adjusting Course Left");
 }
 
 bool Left_Error(){
@@ -266,15 +266,15 @@ bool Bogie(int Safe_Distance){
   delayMicroseconds(10);
   digitalWrite(Scream,LOW);
 
-  duration = pulseIn(Echo,HIGH);
+  duration = pulseIn(Echo, HIGH); //appearently can add a timeout
   distance = duration/58;
 
   if(distance < Safe_Distance) {
-    client.println("Obstacle in Path");
+    //client.println("Obstacle in Path");
     hadObject = true;
     return true;
   }
-  if (hadObject)client.println("Object Removed");
+  //if (hadObject) client.println("Object Removed");
   hadObject = false;
   return false;
 }
