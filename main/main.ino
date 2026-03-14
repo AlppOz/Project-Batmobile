@@ -58,76 +58,71 @@ void setup() {
   analogWrite(rightPermission, 0);
 }
 
+
 int right = 100;
 int left = 125;
-bool stop_message = 0;
+String last_printed_state = ""; // Replaces stop_message to prevent spam
+
 void loop() {
-  //forward(50);
-  //delay(20000);
-  //int left_pulse = left_pulse_count();
-  //Serial.print(left_pulse);
-  //Serial.print("  ");
-  //Serial.print(right_pulse);
-  //Serial.println("");
-
-
-  client = server.available (); //read in current command from client
-  
-  if (client){
-    msg = client.readString();
-    
-    if (msg != ("") || msg[1] == 'F' || msg[1]=='S'){
-      mode = msg[0];
-    }
-    /*
-    if (msg[1]=='+') {
-      if(msg[2]=='L') left += 5;
-    }
-    else right += 5;
-    if (msg[1]=='-') {
-      if(msg[2]=='L') left -= 5;
-    }
-    else right -= 5;
-    */
+  WiFiClient newClient = server.available(); 
+  if (newClient) {
+    client = newClient;  // only overwrite when there's actually a new connection
   }
-  
 
-  if(mode == 'F'){
+  if (client && client.connected()) {
+    if (client.available()) { //only try to read when there's data
+      msg = client.readStringUntil('\n'); 
+      msg.trim();
+
+      if (msg == "Forward") mode = 'F';
+      else if (msg == "Stop") mode = 'S';
+      else if (msg == "+L") left += 5;
+      else if (msg == "-L") left -= 5;
+      else if (msg == "+R") right += 5;
+      else if (msg == "-R") right -= 5;
+    }
+  }
+  String current_state = ""; // Track what is happening right now
+
+  if (mode == 'F') {
+    current_state = "Going Forward"; //default
+
     if (!Bogie()) {
-      if(hadObject && stop_message == 0) {
-        client.println("Object Removed");
-        stop_message = 1;
-
+      if (hadObject) {
+        current_state = "Object Removed";
+        hadObject = false;
       }
-      if (Right_Error()){
+      
+      if (Right_Error()) {
         while (Right_Error()) {
           Step_Left();
         }
-        if (stop_message == 0) {
-          client.println("Adjusting Left");
-          stop_message = 1;
-        }
+        current_state = "Adjusting Left";
       }
-      if (Left_Error()){
+      
+      else if (Left_Error()) {
         while (Left_Error()) {
           Step_Right();
         }
-        if (stop_message == 0) {
-          client.println("Adjusting Right");
-          stop_message = 1;
-        }
+        current_state = "Adjusting Right";
       }
+      
       Mush(200, left, right);
+    } 
+    else {
+      current_state = "Object in path";
+      hadObject = true;
     }
-    else if (stop_message == 0) {
-      client.println("Object in path");
-      stop_message = 1;
-      hadObject = !hadObject;
+  } 
+  else {
+    current_state = "Stopped";
+  }
+
+  // Only send a message if it is different from the last one we sent
+  if (current_state != "" && current_state != last_printed_state) {
+    if (client && client.connected()) {
+      client.println(current_state);
     }
+    last_printed_state = current_state; 
   }
-  else if (stop_message == 0) {
-    client.println("Stopped");
-    stop_message = 1;
-  }
-  stop_message = 0;
 }

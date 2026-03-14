@@ -245,8 +245,7 @@ void Mush(int duration, int left, int right){
   digitalWrite(leftReverse,LOW);
   digitalWrite(rightReverse,LOW);
   
-
-  client.println("Going Forward");
+  //client.println("Going Forward");
   delay(duration);
 
   digitalWrite(leftForward,LOW);
@@ -275,6 +274,6 @@ bool Bogie(int Safe_Distance){
     return true;
   }
   //if (hadObject) client.println("Object Removed");
-  hadObject = false;
+  //hadObject = false;
   return false;
 }
