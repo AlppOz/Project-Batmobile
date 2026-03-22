@@ -69,8 +69,8 @@ byte left_pulse_count() {
   digitalWrite(CD_control, 1);   // load parallel data from CD4040
   delayMicroseconds(5);
   digitalWrite(CD_control, 0);    // switch to serial shift mode
-  //return shiftIn(CD_data, CD_clock, MSBFIRST);
-  return shiftIn_r(CD_data, CD_clock);
+  return shiftIn(CD_data, CD_clock, MSBFIRST); //this is the new built-in shifIn function, causes the pulse to skip by an increment of 2 tho so you have to manually implement
+  //return shiftIn_r(CD_data, CD_clock); //nevermind the custom one has a different cm_per_pulse ratio and the pulse compare logic goes out the window. Better the devil you know, unless a way to fix
 }
 
 
@@ -80,6 +80,7 @@ void rightISR() {
   unsigned long now = micros();
   if (now - lastPulse > CAN) {  // ignore pulses less than 5ms apart
     right_pulse++;
+    right_duration = now - lastPulse;
     lastPulse = now;
   }
 }
@@ -92,15 +93,14 @@ void rightISR() {
 */
 
 
-void forward(float cm) {
-  unsigned int left_power = 100; //out of 255
-  unsigned int right_power = 100;
-  unsigned int increm = 10;
+void forward(float cm, unsigned int left_power, unsigned int right_power) {
+  unsigned int increm = 5;
 
   unsigned int left_power_new = left_power;
   unsigned int right_power_new = right_power;
 
   unsigned int pulse_all = cm / hall_const;
+  //unsigned int pulse_all_left = cm / hall_const_left;
   //add pulse rem method. I.e what if we need 8.8 pulses, it needs to register 0.8 * hall_const for the remaining distance somehow
   
   //the great reset
@@ -124,8 +124,14 @@ void forward(float cm) {
   bool left_done = 0;
   bool right_done = 0;
 
-  while (left_done == 0 || right_done == 0) {
+  //float distance_left;
+  //float distance_right;
+  //unsigned int lastSeenLeft = 0;
+  //unsigned long lastSeenRight = 0;
+
+  while (left_done == 0 || right_done == 0) { //so while at least one is still running
     left_pulse = left_pulse_count();
+    if (left_pulse % 4 != 0) continue;
     //checkRightEncoder();
     //right_pulse already exists as volatile;
 
@@ -142,34 +148,54 @@ void forward(float cm) {
       left_done = 1;
     }
     if (current_right >= pulse_all && right_done == 0) {
-      for (int i = left_power; i >= 0; i--) {
+      for (int i = right_power; i >= 0; i--) {
         analogWrite(rightPermission, i);
         delay(1);
       }
       right_done = 1;
     }
 
-    if (left_done == 0 && right_done == 0) {
-      if (left_pulse > current_right) { //whenever left pulse changes, the first signal has information. A brand new pulse of 2 is truly a 2. And if it is greater than the right's 1 for example, needs correction
-        left_power_new= left_power - (increm * diff);
-        right_power_new = right_power + (increm * diff);
-        analogWrite(leftPermission,left_power_new);
-        analogWrite(rightPermission,right_power_new);
-      }
-      diff = abs((int)left_pulse - (int)current_right);
-      if (left_pulse < current_right) {
-        left_power_new = left_power + (increm * diff);
-        right_power_new = right_power - (increm * diff);
-        analogWrite(leftPermission,left_power_new);
-        analogWrite(rightPermission,right_power_new);
-      }
-      else {
-        analogWrite(leftPermission,left_power_new);
-        analogWrite(rightPermission,right_power_new);
-      }
-    }
-    
+    if (left_done == 0 && right_done == 0) { //so while both are still running
+      err = (double)left_pulse - (double)current_right;
 
+      //if (err = -1) continue;
+
+      pid_f.Compute();
+
+      
+      left_power_new = left_power + (int)correction;
+      right_power_new = right_power - (int)correction;
+
+      left_power_new = constrain(left_power_new, 70, 150);
+      right_power_new = constrain(right_power_new, 70, 150); //the constrains shouldn't be equal
+
+      analogWrite(leftPermission,left_power_new);
+      analogWrite(rightPermission,right_power_new);
+
+
+      /*
+      //diff = 1;
+      //distance_left = left_pulse * hall_const_left;
+      //distance_right = current_right * hall_const_right;
+      if ((left_pulse > current_right)) { //whenever left pulse changes, the first signal has information. A brand new pulse of 2 is truly a 2. And if it is greater than the right's 1 for example, needs correction
+        left_power_new= left_power_new - increm;
+        right_power_new = right_power_new + increm;
+        //left_power_new= left_power_new - (increm * diff);
+        //right_power_new = right_power_new + (increm * diff);
+      }
+      else if (current_right > left_pulse + 1) {
+        left_power_new = left_power_new + increm;
+        right_power_new = right_power_new - increm;
+        // left_power_new = left_power_new + (increm * diff);
+        // right_power_new = right_power_new - (increm * diff);
+      }
+      */
+      //delay(5);
+    }
+
+    
+    
+    
     Serial.print(left_pulse);
     Serial.print(" ");
     Serial.print(left_power_new);
@@ -177,8 +203,11 @@ void forward(float cm) {
     Serial.print(right_pulse);
     Serial.print(" ");
     Serial.print(right_power_new);
+    Serial.print("         ");
+    Serial.print(correction);
     Serial.println("");
     
+
   }
 
   
@@ -190,23 +219,31 @@ void forward(float cm) {
 }
 
 void spinRight(int duration){
-  analogWrite(leftPermission,120); //give left motor power of 120/255
-  analogWrite(rightPermission,0); //spinning right only so right motor gets 0 power
+  analogWrite(leftPermission,100); //give left motor power of 120/255
+  analogWrite(rightPermission,100); //spinning right only so right motor gets 0 power
   digitalWrite(leftForward,HIGH); //enable forward motion
   digitalWrite(leftReverse,LOW); //disable backwards motion
+  digitalWrite(rightReverse,HIGH);
+  digitalWrite(rightForward,LOW);
   delay(duration);
   digitalWrite(leftForward,LOW); //disable forward motion after set time
   analogWrite(leftPermission,0); //stop left motor
+  digitalWrite(rightReverse,LOW);
+  analogWrite(rightPermission,0);
 }
 
 void spinLeft(int duration){
   analogWrite(rightPermission,100);
-  analogWrite(leftPermission,0);
+  analogWrite(leftPermission,100);
   digitalWrite(rightForward,HIGH);
   digitalWrite(rightReverse,LOW);
+  digitalWrite(leftReverse,HIGH);
+  digitalWrite(leftForward,LOW);
   delay(duration);
   digitalWrite(rightForward,LOW);
   analogWrite(rightPermission,0);
+  digitalWrite(leftReverse,LOW);
+  analogWrite(leftPermission,0);
 }
 
 void Step_Right(){

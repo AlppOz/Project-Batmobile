@@ -1,6 +1,7 @@
 #include "config.h"
 #include "functions.h"
 
+
 // Define and initialize the WiFi variables here
 char ssid[] = "Gotham";
 char pass[] = "Bruce_Wayne";
@@ -19,6 +20,12 @@ volatile bool hadObject = false;
 char mode = 'S';
 String msg = "";
 
+//PID Global
+double err;
+double correction;
+double setpoint = 0;
+PID pid_f(&err, &correction, &setpoint, Kp, Ki, Kd, DIRECT);
+
 
 void setup() {
   Serial.begin(115200);
@@ -32,7 +39,7 @@ void setup() {
   Serial.print("IP␣Address:␣");
   Serial.println(ip);
   server.begin();
-
+  
   //pin intialization
   pinMode(Scream,OUTPUT);
   pinMode(Echo,INPUT);
@@ -54,6 +61,10 @@ void setup() {
   delay(10);
   digitalWrite(reset_CD, LOW);
 
+  pid_f.SetMode(AUTOMATIC);
+  pid_f.SetSampleTime(10);
+  pid_f.SetOutputLimits(-60, 60);
+
   analogWrite(leftPermission, 0);
   analogWrite(rightPermission, 0);
 }
@@ -62,8 +73,56 @@ void setup() {
 int right = 100;
 int left = 125;
 String last_printed_state = ""; // Replaces stop_message to prevent spam
+char command = 'q';
+String num;
+float value;
+int distance;
 
 void loop() {
+  /*
+  WiFiClient newClient = server.available();
+
+  if (newClient) {
+    client = newClient;  // only overwrite when there's actually a new connection
+  }
+
+  if (client && client.connected()) {
+    if (client.available()) { //only try to read when there's data
+      msg = client.readStringUntil('\n'); 
+      msg.trim();
+      if (msg!= "STOP") {
+        command = msg.charAt(0);
+        num = msg.substring(2);
+        value = num.toFloat();
+      }
+    }
+
+    if (command == 'F') {
+      for(int i = 0; i < value/5; i++) {
+        forward(5);
+        distance += 5;
+        client.print("DIST:");
+        client.println(distance);
+        command = 'q';
+      }
+      client.println("DONE");
+    }
+  }
+  if (command == 'L'){
+    spinLeft(1000);
+    client.println("DONE");
+    command = 'q';
+  }
+
+  if (command == 'R'){
+    spinRight(1000);
+    client.println("DONE");
+    command = 'q';
+  }
+  */
+  forward(200, left, right);
+  delay(2000);
+/* Bronze challenge remains
   WiFiClient newClient = server.available(); 
   if (newClient) {
     client = newClient;  // only overwrite when there's actually a new connection
@@ -125,4 +184,5 @@ void loop() {
     }
     last_printed_state = current_state; 
   }
+*/
 }
