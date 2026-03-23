@@ -21,10 +21,16 @@ char mode = 'S';
 String msg = "";
 
 //PID Global
-double err;
-double correction;
+double err_r;
+double correction_r;
 double setpoint = 0;
-PID pid_f(&err, &correction, &setpoint, Kp, Ki, Kd, DIRECT);
+PID pid_r(&err_r, &correction_r, &setpoint, Kp_r, Ki_r, Kd_r, DIRECT);
+
+double err_l;
+double correction_l;
+PID pid_l(&err_l, &correction_l, &setpoint, Kp_l, Ki_l, Kd_l, DIRECT);
+
+float current_speed = 0;
 
 
 void setup() {
@@ -61,17 +67,21 @@ void setup() {
   delay(10);
   digitalWrite(reset_CD, LOW);
 
-  pid_f.SetMode(AUTOMATIC);
-  pid_f.SetSampleTime(10);
-  pid_f.SetOutputLimits(-60, 60);
+  pid_r.SetMode(AUTOMATIC);
+  pid_r.SetSampleTime(10);
+  pid_r.SetOutputLimits(-60, 60);
+
+  pid_l.SetMode(AUTOMATIC);
+  pid_l.SetSampleTime(10);
+  pid_l.SetOutputLimits(-60, 60);
 
   analogWrite(leftPermission, 0);
   analogWrite(rightPermission, 0);
 }
 
 
-int right = 100;
-int left = 125;
+int right = 200;
+int left = 220;
 String last_printed_state = ""; // Replaces stop_message to prevent spam
 char command = 'q';
 String num;
@@ -120,8 +130,17 @@ void loop() {
     command = 'q';
   }
   */
-  forward(200, left, right);
+  forward(100, left, right);
+  //spinLeft(wait_per_angle * 90);
   delay(2000);
+  /*
+  digitalWrite(leftForward,HIGH);
+  digitalWrite(rightForward,HIGH);
+  digitalWrite(leftReverse,LOW);
+  digitalWrite(rightReverse,LOW);
+  analogWrite(leftPermission,120);
+  analogWrite(rightPermission,100);
+  */
 /* Bronze challenge remains
   WiFiClient newClient = server.available(); 
   if (newClient) {

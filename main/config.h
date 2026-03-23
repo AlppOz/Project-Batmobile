@@ -41,6 +41,8 @@ const float hall_const = 5.1; //cm per pulse constant for right. The slides clai
 //the right doesn't have this problem. But since the corrective logic is based on comparing the two pulses, what use is there of a pulse of 1 or 2 or 3 for example in the right wheel.
 //const float hall_const_left = 10.0; //for left with the hardcoded shiftIn
 
+const float wait_per_angle = 8.33;
+
 //intial mode for buggy until told otherwise (Oguz Note: What are these?)
 extern char mode;
 extern String msg;
@@ -53,14 +55,19 @@ extern volatile bool hadObject;
 //extern int lastRightState;
 
 //PID stuff
-extern PID pid_f;
-extern double err;
-extern double correction;
+extern PID pid_r, pid_l;
+extern double err_r, err_l;
+extern double correction_r, correction_l;
 extern double setpoint;
 //fine tune the PID parameters
-const double Kp = 5.85;
-const double Ki = 4.3875;
-const double Kd =  0.0;
+const double Kp_r = 20;
+const double Ki_r = 0.1;
+const double Kd_r =  0.0;
 
+const double Kp_l = 3;
+const double Ki_l = 0.0;
+const double Kd_l =  0.0;
+
+extern float current_speed;
 
 #endif

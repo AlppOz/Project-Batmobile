@@ -108,9 +108,18 @@ void forward(float cm, unsigned int left_power, unsigned int right_power) {
   delay(10);
   digitalWrite(reset_CD, LOW);
   unsigned int left_pulse = 0;
+  unsigned int prev_left_pulse = 0;
+  unsigned long prev_left_time = micros();
+  unsigned long left_duration = 0;
+  float baseline_velocity_l = 0;
+  float current_velocity_l = 0;
 
   noInterrupts();
   right_pulse = 0;
+  unsigned long current_right;
+  unsigned long current_interval;
+  float baseline_velocity_r = 0;
+  float current_velocity_r = 0;
   interrupts();
 
   //starting the motors
@@ -119,8 +128,7 @@ void forward(float cm, unsigned int left_power, unsigned int right_power) {
   digitalWrite(leftReverse,LOW);
   digitalWrite(rightReverse,LOW);
 
-  int diff = 1;
-  unsigned long current_right;
+
   bool left_done = 0;
   bool right_done = 0;
 
@@ -131,47 +139,83 @@ void forward(float cm, unsigned int left_power, unsigned int right_power) {
 
   while (left_done == 0 || right_done == 0) { //so while at least one is still running
     left_pulse = left_pulse_count();
-    if (left_pulse % 4 != 0) continue;
+    if (left_pulse != prev_left_pulse && left_pulse % 4 == 0) {
+      unsigned long now = micros();
+      left_duration = now - prev_left_time;
+      prev_left_time = now;
+      prev_left_pulse = left_pulse;
+    }
+    //if (left_pulse % 4 != 0) continue;
     //checkRightEncoder();
     //right_pulse already exists as volatile;
 
     noInterrupts();
     current_right = right_pulse;
+    current_interval = right_duration;
     interrupts();
+
 
     //break individually logic. The "smooth" logic with the loop might be a little wrong
     if (left_pulse >= pulse_all && left_done == 0) {
-      for (int i = left_power; i >= 0; i--) { //loop for smooth transition to a full stop not an abrupt one
-        analogWrite(leftPermission, i);
-        delay(1);
-      }
+      //for (int i = left_power; i >= 0; i--) { //loop for smooth transition to a full stop not an abrupt one
+      
+        //delay(1);
+      //}
+      analogWrite(leftPermission, 0);
       left_done = 1;
+
     }
     if (current_right >= pulse_all && right_done == 0) {
-      for (int i = right_power; i >= 0; i--) {
-        analogWrite(rightPermission, i);
-        delay(1);
-      }
+      //for (int i = right_power; i >= 0; i--) {
+        
+        //delay(1);
+      //}
+      analogWrite(rightPermission, 0);
       right_done = 1;
     }
 
     if (left_done == 0 && right_done == 0) { //so while both are still running
-      err = (double)left_pulse - (double)current_right;
-
-      //if (err = -1) continue;
-
-      pid_f.Compute();
+      /*
+      if (current_right <= 3) {
+        baseline_velocity_r = hall_const / (current_interval / 1000000.0);
+        baseline_velocity_l = (hall_const * 2) / (left_duration / 1000000.0);
+        analogWrite(leftPermission,left_power);
+        analogWrite(rightPermission,right_power);
+      }
+      */
+      if (current_interval == 0 || left_duration == 0) {
+        analogWrite(leftPermission,left_power);
+        analogWrite(rightPermission,right_power);
+      }
 
       
-      left_power_new = left_power + (int)correction;
-      right_power_new = right_power - (int)correction;
+      if (current_interval > 0 && left_duration > 0) {
+        
+        current_velocity_r = hall_const / (current_interval / 1000000.0);
+        if (left_pulse % 4 == 0) {
+          current_velocity_l = (hall_const * 4) / (left_duration / 1000000.0);
+        }
+        float baseline_velocity = (current_velocity_l + current_velocity_r) / 2.0;
+        current_speed = baseline_velocity;
+        baseline_velocity_r = baseline_velocity;
+        baseline_velocity_l = baseline_velocity;
+        err_r = baseline_velocity_r - current_velocity_r;
 
-      left_power_new = constrain(left_power_new, 70, 150);
-      right_power_new = constrain(right_power_new, 70, 150); //the constrains shouldn't be equal
+        
+        err_l = baseline_velocity_l - current_velocity_l;
 
-      analogWrite(leftPermission,left_power_new);
-      analogWrite(rightPermission,right_power_new);
+        pid_r.Compute();
+        pid_l.Compute();
+      
+        left_power_new = left_power - (int)correction_l;
+        right_power_new = right_power - (int)correction_r;
 
+        left_power_new = constrain(left_power_new, 100, 255);
+        right_power_new = constrain(right_power_new, 100, 255); //the constrains shouldn't be equal
+
+        analogWrite(leftPermission,left_power_new);
+        analogWrite(rightPermission,right_power_new);
+      }
 
       /*
       //diff = 1;
@@ -195,7 +239,7 @@ void forward(float cm, unsigned int left_power, unsigned int right_power) {
 
     
     
-    
+    if (left_pulse % 4 == 0) {
     Serial.print(left_pulse);
     Serial.print(" ");
     Serial.print(left_power_new);
@@ -203,11 +247,22 @@ void forward(float cm, unsigned int left_power, unsigned int right_power) {
     Serial.print(right_pulse);
     Serial.print(" ");
     Serial.print(right_power_new);
-    Serial.print("         ");
-    Serial.print(correction);
-    Serial.println("");
+    Serial.print("      ");
     
-
+    
+    Serial.print("E_l:");
+    Serial.print(err_l);
+    Serial.print(" C_l:");
+    Serial.print(correction_l);
+    Serial.print("  E_r:");
+    Serial.print(err_r);
+    Serial.print(" C_r:");
+    Serial.print(correction_r);
+    Serial.print("     VL:");
+    Serial.print(current_velocity_l);
+    Serial.print(" VR:");
+    Serial.println(current_velocity_r);
+    }
   }
 
   
