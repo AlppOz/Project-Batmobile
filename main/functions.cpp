@@ -100,6 +100,7 @@ void forward(float cm, unsigned int left_power, unsigned int right_power) {
   unsigned int right_power_new = right_power;
 
   unsigned int pulse_all = cm / hall_const;
+
   //unsigned int pulse_all_left = cm / hall_const_left;
   //add pulse rem method. I.e what if we need 8.8 pulses, it needs to register 0.8 * hall_const for the remaining distance somehow
   
@@ -173,6 +174,7 @@ void forward(float cm, unsigned int left_power, unsigned int right_power) {
       analogWrite(rightPermission, 0);
       right_done = 1;
     }
+
 
     if (left_done == 0 && right_done == 0) { //so while both are still running
       /*
@@ -274,8 +276,8 @@ void forward(float cm, unsigned int left_power, unsigned int right_power) {
 }
 
 void spinRight(int duration){
-  analogWrite(leftPermission,100); //give left motor power of 120/255
-  analogWrite(rightPermission,100); //spinning right only so right motor gets 0 power
+  analogWrite(leftPermission,200); //give left motor power of 120/255
+  analogWrite(rightPermission,200); //spinning right only so right motor gets 0 power
   digitalWrite(leftForward,HIGH); //enable forward motion
   digitalWrite(leftReverse,LOW); //disable backwards motion
   digitalWrite(rightReverse,HIGH);
@@ -288,8 +290,8 @@ void spinRight(int duration){
 }
 
 void spinLeft(int duration){
-  analogWrite(rightPermission,100);
-  analogWrite(leftPermission,100);
+  analogWrite(rightPermission,200);
+  analogWrite(leftPermission,200);
   digitalWrite(rightForward,HIGH);
   digitalWrite(rightReverse,LOW);
   digitalWrite(leftReverse,HIGH);

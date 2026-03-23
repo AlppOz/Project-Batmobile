@@ -130,9 +130,17 @@ void loop() {
     command = 'q';
   }
   */
-  forward(100, left, right);
-  //spinLeft(wait_per_angle * 90);
-  delay(2000);
+
+  forward(80, left, right);
+  delay(200);
+  spinRight(550);
+  forward(60, left, right);
+  delay(200);
+  spinLeft(600);
+  delay(200);
+  forward(60, left, right);
+
+  delay(20000000);
   /*
   digitalWrite(leftForward,HIGH);
   digitalWrite(rightForward,HIGH);
