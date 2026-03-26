@@ -132,13 +132,27 @@ void forward(float cm, unsigned int left_power, unsigned int right_power) {
 
   bool left_done = 0;
   bool right_done = 0;
-
+  int distance = 0;
   //float distance_left;
   //float distance_right;
   //unsigned int lastSeenLeft = 0;
   //unsigned long lastSeenRight = 0;
 
   while (left_done == 0 || right_done == 0) { //so while at least one is still running
+
+    if (Bogie() == 1) {
+      digitalWrite(leftForward,LOW);
+      digitalWrite(rightForward,LOW);
+      digitalWrite(leftReverse,LOW);
+      digitalWrite(rightReverse,LOW);
+      continue;
+    }
+    else {
+      digitalWrite(leftForward,HIGH);
+      digitalWrite(rightForward,HIGH);
+      digitalWrite(leftReverse,LOW);
+      digitalWrite(rightReverse,LOW);
+    }
     left_pulse = left_pulse_count();
     if (left_pulse != prev_left_pulse && left_pulse % 4 == 0) {
       unsigned long now = micros();
@@ -238,10 +252,15 @@ void forward(float cm, unsigned int left_power, unsigned int right_power) {
       */
       //delay(5);
     }
+    distance += left_pulse/hall_const;
+    client.print("DIST:");
+    client.print(distance);
+    client.print(",SPEED");
+    client.println(current_speed);
 
     
     
-    if (left_pulse % 4 == 0) {
+    if (true || left_pulse % 4 == 0) {
     Serial.print(left_pulse);
     Serial.print(" ");
     Serial.print(left_power_new);
@@ -265,6 +284,7 @@ void forward(float cm, unsigned int left_power, unsigned int right_power) {
     Serial.print(" VR:");
     Serial.println(current_velocity_r);
     }
+    
   }
 
   
@@ -276,6 +296,7 @@ void forward(float cm, unsigned int left_power, unsigned int right_power) {
 }
 
 void spinRight(int duration){
+  /*
   analogWrite(leftPermission,200); //give left motor power of 120/255
   analogWrite(rightPermission,200); //spinning right only so right motor gets 0 power
   digitalWrite(leftForward,HIGH); //enable forward motion
@@ -287,9 +308,44 @@ void spinRight(int duration){
   analogWrite(leftPermission,0); //stop left motor
   digitalWrite(rightReverse,LOW);
   analogWrite(rightPermission,0);
+  */
+  noInterrupts();
+  right_pulse = 0;
+  unsigned long current_right = 0;
+  interrupts();
+  
+  /*
+  if (true) {
+    Serial.print(" ");
+    Serial.print("   ");
+    Serial.print(right_pulse);
+    Serial.print(" ");
+    Serial.print("      ");
+  }
+  */
+  //starting the motors
+  digitalWrite(leftForward,HIGH); //enable forward motion
+  digitalWrite(leftReverse,LOW); //disable backwards motion
+  digitalWrite(rightReverse,HIGH);
+  digitalWrite(rightForward,LOW);
+
+  while (current_right < 2) {
+    noInterrupts();
+    current_right = right_pulse;
+    interrupts();
+
+    analogWrite(leftPermission,100); //give left motor power of 120/255
+    analogWrite(rightPermission,100);
+  }
+  delay(duration); //in case we need a wee bit more
+  digitalWrite(leftForward,LOW); //disable forward motion after set time
+  analogWrite(leftPermission,0); //stop left motor
+  digitalWrite(rightReverse,LOW);
+  analogWrite(rightPermission,0);
 }
 
 void spinLeft(int duration){
+  /*
   analogWrite(rightPermission,200);
   analogWrite(leftPermission,200);
   digitalWrite(rightForward,HIGH);
@@ -301,9 +357,43 @@ void spinLeft(int duration){
   analogWrite(rightPermission,0);
   digitalWrite(leftReverse,LOW);
   analogWrite(leftPermission,0);
+  */
+  noInterrupts();
+  right_pulse = 0;
+  unsigned long current_right = 0;
+  interrupts();
+  
+  /*
+  if (true) {
+    Serial.print(" ");
+    Serial.print("   ");
+    Serial.print(right_pulse);
+    Serial.print(" ");
+    Serial.print("      ");
+  }
+  */
+  //starting the motors
+  digitalWrite(rightForward,HIGH);
+  digitalWrite(rightReverse,LOW);
+  digitalWrite(leftReverse,HIGH);
+  digitalWrite(leftForward,LOW);
+
+  while (current_right < 2) {
+    noInterrupts();
+    current_right = right_pulse;
+    interrupts();
+
+    analogWrite(leftPermission,100); //give left motor power of 120/255
+    analogWrite(rightPermission,100);
+  }
+  delay(duration);
+  digitalWrite(rightForward,LOW);
+  analogWrite(rightPermission,0);
+  digitalWrite(leftReverse,LOW);
+  analogWrite(leftPermission,0);
 }
 
-void Step_Right(){
+void Step_Right(){ //legacy bronze version. Need updating for gold
   spinRight(25);
   //client.println("Adjusting Course Right");
 }

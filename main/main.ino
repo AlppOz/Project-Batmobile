@@ -89,7 +89,7 @@ float value;
 int distance;
 
 void loop() {
-  /*
+  
   WiFiClient newClient = server.available();
 
   if (newClient) {
@@ -108,39 +108,44 @@ void loop() {
     }
 
     if (command == 'F') {
-      for(int i = 0; i < value/5; i++) {
-        forward(5);
-        distance += 5;
-        client.print("DIST:");
-        client.println(distance);
-        command = 'q';
-      }
+      forward(value, left, right);
+      command = 'q';
       client.println("DONE");
+      delay(1000);
     }
   }
   if (command == 'L'){
-    spinLeft(1000);
+    spinLeft(200);
     client.println("DONE");
     command = 'q';
+    delay(2000);
   }
 
   if (command == 'R'){
-    spinRight(1000);
+    spinRight(0);
     client.println("DONE");
     command = 'q';
+    delay(2000);
   }
-  */
-
+  
+  //forward(100, left, right);
+  //spinLeft(200);
+  //spinRight();
+  //delay(200000);
+  /*
+  forward(100, left, right);
+  delay(2000);
   forward(80, left, right);
-  delay(200);
+  delay(1000);
   spinRight(550);
   forward(60, left, right);
-  delay(200);
-  spinLeft(600);
-  delay(200);
+  delay(1000);
+  spinLeft(400);
+  delay(1000);
   forward(60, left, right);
 
   delay(20000000);
+  */
   /*
   digitalWrite(leftForward,HIGH);
   digitalWrite(rightForward,HIGH);

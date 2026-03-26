@@ -60,11 +60,11 @@ extern double err_r, err_l;
 extern double correction_r, correction_l;
 extern double setpoint;
 //fine tune the PID parameters
-const double Kp_r = 10;
-const double Ki_r = 0.1;
+const double Kp_r = 20;
+const double Ki_r = 2;
 const double Kd_r =  0.0;
 
-const double Kp_l = 4;
+const double Kp_l = 5;
 const double Ki_l = 0.01;
 const double Kd_l =  0.0;
 

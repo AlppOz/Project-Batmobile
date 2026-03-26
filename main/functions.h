@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include "config.h"
 
-void forward(float cm, unsigned int left_power = 120, unsigned int right_power = 100); //drives the car forwards a specified amount of distance
+void forward(float cm, unsigned int left_power = 220, unsigned int right_power = 200); //drives the car forwards a specified amount of distance
 
 byte shiftIn(int myDataPin, int myClockPin);
 
